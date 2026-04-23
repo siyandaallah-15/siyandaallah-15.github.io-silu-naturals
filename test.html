@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SiLu Naturals - System Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: #000; color: #FFD700; padding: 30px; text-align: center; }
+        .header h1 { font-size: 28px; margin-bottom: 5px; }
+        .header p { color: #ccc; font-size: 14px; }
+        .test-section { padding: 25px; border-bottom: 1px solid #eee; }
+        .test-section:last-child { border-bottom: none; }
+        .test-section h2 { font-size: 18px; margin-bottom: 15px; color: #333; }
+        .status-grid { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+        .status-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f9f9f9; border-radius: 6px; }
+        .status-label { font-weight: 500; }
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .status-pass { background: #d4edda; color: #155724; }
+        .status-fail { background: #f8d7da; color: #721c24; }
+        .status-warn { background: #fff3cd; color: #856404; }
+        .status-info { background: #e7f3ff; color: #004085; }
+        .btn { display: inline-block; padding: 12px 24px; background: #000; color: #FFD700; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin: 5px; }
+        .btn:hover { background: #333; }
+        .btn-secondary { background: #fff; color: #000; border: 2px solid #000; }
+        .test-area { margin-top: 15px; padding: 15px; background: #f9f9f9; border-radius: 8px; }
+        .log-output { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 13px; max-height: 200px; overflow-y: auto; margin-top: 10px; }
+        .log-pass { color: #4ec9b0; }
+        .log-fail { color: #f48771; }
+        .log-warn { color: #dcdcaa; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 SiLu Naturals System Test</h1>
+            <p>Diagnostic tool to verify your setup</p>
+        </div>
+
+        <div class="test-section">
+            <h2>1. Configuration Check</h2>
+            <div class="status-grid" id="config-checks">
+                <div class="status-item">
+                    <span class="status-label">Paystack Key</span>
+                    <span class="status-badge status-info" id="paystack-key-status">Checking...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">API Base URL</span>
+                    <span class="status-badge status-info" id="api-url-status">Checking...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Products Configured</span>
+                    <span class="status-badge status-info" id="products-status">Checking...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Packs Configured</span>
+                    <span class="status-badge status-info" id="packs-status">Checking...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>2. Script Loading</h2>
+            <div class="status-grid" id="script-checks">
+                <div class="status-item">
+                    <span class="status-label">silu-backend.js</span>
+                    <span class="status-badge status-info" id="backend-status">Checking...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Paystack SDK</span>
+                    <span class="status-badge status-info" id="paystack-sdk-status">Checking...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>3. Interactive Tests</h2>
+            <button class="btn" onclick="testPaystack()">🧪 Test Paystack Popup</button>
+            <button class="btn btn-secondary" onclick="testApiConnection()">🌐 Test API Connection</button>
+            <button class="btn btn-secondary" onclick="clearLogs()">Clear Logs</button>
+            <div class="test-area">
+                <strong>Test Output:</strong>
+                <div class="log-output" id="test-log">Click a button above to run tests...</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>4. Quick Actions</h2>
+            <button class="btn" onclick="openPackModal()">📦 Open Pack Selection</button>
+            <button class="btn" onclick="openCartModal()">🛒 Open Cart</button>
+            <button class="btn" onclick="openLoginModal()">🔑 Open Login</button>
+            <button class="btn" onclick="openMaintenanceModal()">💰 Open Maintenance</button>
+            <button class="btn" onclick="openDashboardModal()">📊 Open Dashboard</button>
+        </div>
+
+        <div class="test-section">
+            <h2>5. Fix Common Issues</h2>
+            <div id="fix-suggestions" style="color: #666; font-size: 14px;">
+                Run the checks above to see suggestions...
+            </div>
+        </div>
+    </div>
+
+    <!-- Load the backend script -->
+    <script src="silu-backend.js"></script>
+
+    <script>
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('test-log');
+            const colorClass = type === 'pass' ? 'log-pass' : type === 'fail' ? 'log-fail' : type === 'warn' ? 'log-warn' : '';
+            const emoji = type === 'pass' ? '✅' : type === 'fail' ? '❌' : type === 'warn' ? '⚠️' : 'ℹ️';
+            logDiv.innerHTML += `<div class="${colorClass}">${emoji} ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('test-log').innerHTML = 'Logs cleared. Ready for new tests...';
+        }
+
+        function setStatus(id, status, text) {
+            const el = document.getElementById(id);
+            el.textContent = text;
+            el.className = 'status-badge status-' + status;
+        }
+
+        // Run checks on load
+        setTimeout(() => {
+            // Check silu-backend.js
+            if (typeof SiluApp !== 'undefined') {
+                setStatus('backend-status', 'pass', 'Loaded ✓');
+            } else {
+                setStatus('backend-status', 'fail', 'Not Found ✗');
+            }
+
+            // Check Paystack SDK
+            if (typeof PaystackPop !== 'undefined') {
+                setStatus('paystack-sdk-status', 'pass', 'Loaded ✓');
+            } else {
+                setStatus('paystack-sdk-status', 'fail', 'Not Found ✗');
+            }
+
+            // Check CONFIG
+            if (typeof CONFIG !== 'undefined') {
+                // Paystack key
+                if (CONFIG.PAYSTACK_PUBLIC_KEY && CONFIG.PAYSTACK_PUBLIC_KEY.includes('pk_test_2e1695b')) {
+                    setStatus('paystack-key-status', 'pass', 'Test Key ✓');
+                } else if (CONFIG.PAYSTACK_PUBLIC_KEY && CONFIG.PAYSTACK_PUBLIC_KEY.includes('pk_live_')) {
+                    setStatus('paystack-key-status', 'pass', 'Live Key ✓');
+                } else {
+                    setStatus('paystack-key-status', 'fail', 'Missing ✗');
+                }
+
+                // API URL
+                if (CONFIG.API_BASE_URL && !CONFIG.API_BASE_URL.includes('your-project')) {
+                    setStatus('api-url-status', 'pass', 'Configured ✓');
+                } else {
+                    setStatus('api-url-status', 'fail', 'Placeholder ✗');
+                }
+
+                // Products
+                const products = Object.keys(CONFIG.PRODUCTS || {});
+                setStatus('products-status', products.length > 0 ? 'pass' : 'fail', `${products.length} found`);
+
+                // Packs
+                const packs = Object.keys(CONFIG.PACKS || {});
+                setStatus('packs-status', packs.length > 0 ? 'pass' : 'fail', `${packs.length} found`);
+            } else {
+                setStatus('paystack-key-status', 'fail', 'No CONFIG');
+                setStatus('api-url-status', 'fail', 'No CONFIG');
+                setStatus('products-status', 'fail', 'No CONFIG');
+                setStatus('packs-status', 'fail', 'No CONFIG');
+            }
+
+            updateFixSuggestions();
+        }, 1500);
+
+        function updateFixSuggestions() {
+            const suggestions = [];
+
+            if (typeof SiluApp === 'undefined') {
+                suggestions.push('❌ <strong>silu-backend.js not loaded</strong><br>Add: &lt;script src="silu-backend.js"&gt;&lt;/script&gt; before &lt;/body&gt;');
+            }
+
+            if (typeof PaystackPop === 'undefined') {
+                suggestions.push('❌ <strong>Paystack SDK not loaded</strong><br>Check internet connection. The script loads from js.paystack.co');
+            }
+
+            if (typeof CONFIG !== 'undefined' && CONFIG.API_BASE_URL && CONFIG.API_BASE_URL.includes('your-project')) {
+                suggestions.push('❌ <strong>API URL is still a placeholder</strong><br>Open silu-backend.js and replace with your Vercel URL');
+            }
+
+            if (suggestions.length === 0) {
+                document.getElementById('fix-suggestions').innerHTML = '✅ <strong>All checks passed!</strong> Your setup looks good. Try the interactive tests above.';
+            } else {
+                document.getElementById('fix-suggestions').innerHTML = suggestions.join('<br><br>');
+            }
+        }
+
+        function testPaystack() {
+            log('Testing Paystack popup...', 'info');
+
+            if (typeof PaystackPop === 'undefined') {
+                log('Paystack SDK not loaded! Check internet connection.', 'fail');
+                return;
+            }
+
+            if (typeof CONFIG === 'undefined' || !CONFIG.PAYSTACK_PUBLIC_KEY) {
+                log('Paystack key not configured!', 'fail');
+                return;
+            }
+
+            try {
+                const handler = PaystackPop.setup({
+                    key: CONFIG.PAYSTACK_PUBLIC_KEY,
+                    email: 'test@silunaturals.co.za',
+                    amount: 60000,
+                    currency: 'ZAR',
+                    ref: 'TEST_' + Date.now(),
+                    callback: function(response) {
+                        log('Payment successful! Reference: ' + response.reference, 'pass');
+                    },
+                    onClose: function() {
+                        log('Payment window closed', 'warn');
+                    }
+                });
+                handler.openIframe();
+                log('Paystack popup opened! Use test card:', 'pass');
+                log('Card: 4084 0840 8408 4081 | Expiry: 12/30 | CVV: 000 | PIN: 12345', 'info');
+            } catch (err) {
+                log('Error: ' + err.message, 'fail');
+            }
+        }
+
+        async function testApiConnection() {
+            log('Testing API connection...', 'info');
+
+            if (typeof CONFIG === 'undefined' || !CONFIG.API_BASE_URL || CONFIG.API_BASE_URL.includes('your-project')) {
+                log('API URL not configured! Update silu-backend.js first.', 'fail');
+                return;
+            }
+
+            try {
+                const start = Date.now();
+                const response = await fetch(CONFIG.API_BASE_URL + '/admin/dashboard', {
+                    method: 'GET',
+                    headers: { 'Authorization': 'Bearer test' }
+                });
+                const elapsed = Date.now() - start;
+
+                if (response.status === 401) {
+                    log(`API reachable! (401 = auth required, correct) - ${elapsed}ms`, 'pass');
+                } else if (response.status === 200) {
+                    log(`API responding! Status 200 - ${elapsed}ms`, 'pass');
+                } else {
+                    log(`API responded with status ${response.status} - ${elapsed}ms`, 'warn');
+                }
+            } catch (err) {
+                log('Cannot reach API: ' + err.message, 'fail');
+                log('Check: Is Vercel deployed? Is the URL correct?', 'info');
+            }
+        }
+
+        function openPackModal() {
+            if (typeof SiluApp !== 'undefined') {
+                SiluApp.showPackSelection();
+                log('Pack selection modal opened', 'pass');
+            } else {
+                log('SiluApp not loaded!', 'fail');
+            }
+        }
+
+        function openCartModal() {
+            if (typeof SiluApp !== 'undefined') {
+                SiluApp.showCartModal();
+                log('Cart modal opened', 'pass');
+            } else {
+                log('SiluApp not loaded!', 'fail');
+            }
+        }
+
+        function openLoginModal() {
+            if (typeof SiluApp !== 'undefined') {
+                SiluApp.showLoginModal();
+                log('Login modal opened', 'pass');
+            } else {
+                log('SiluApp not loaded!', 'fail');
+            }
+        }
+
+        function openMaintenanceModal() {
+            if (typeof SiluApp !== 'undefined') {
+                SiluApp.showMaintenanceTab();
+                log('Maintenance modal opened', 'pass');
+            } else {
+                log('SiluApp not loaded!', 'fail');
+            }
+        }
+
+        function openDashboardModal() {
+            if (typeof SiluApp !== 'undefined') {
+                SiluApp.showDashboard();
+                log('Dashboard modal opened', 'pass');
+            } else {
+                log('SiluApp not loaded!', 'fail');
+            }
+        }
+    </script>
+</body>
+</html>
