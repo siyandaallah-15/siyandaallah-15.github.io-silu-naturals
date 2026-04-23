@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silu Naturals - Backend Test</title>
+    <style>
+        body { font-family: 'Outfit', sans-serif; padding: 40px; background: #f9f9f0; }
+        .test-box { background: white; padding: 30px; border-radius: 12px; max-width: 600px; margin: 20px auto; box-shadow: 0 4px 20px rgba(0,0,0,.1); }
+        h1 { color: #111; font-family: 'Playfair Display', serif; }
+        .status { padding: 12px; border-radius: 8px; margin: 10px 0; }
+        .status.ok { background: #e8f5e9; color: #2e7d32; }
+        .status.error { background: #ffebee; color: #c62828; }
+        .status.pending { background: #fff8e1; color: #f57f17; }
+        button { background: #111; color: #F5E642; border: none; padding: 12px 24px; cursor: pointer; font-family: 'Outfit', sans-serif; margin: 5px; }
+        #log { background: #1a1a1a; color: #F5E642; padding: 20px; border-radius: 8px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="test-box">
+        <h1>🔧 Silu Naturals Backend Test</h1>
+        <p>This page tests your Supabase connection.</p>
+
+        <div id="connection-status" class="status pending">⏳ Checking connection...</div>
+        <div id="auth-status" class="status pending">⏳ Checking auth...</div>
+        <div id="db-status" class="status pending">⏳ Checking database...</div>
+
+        <div style="margin-top: 20px;">
+            <button onclick="testConnection()">🔄 Test Connection</button>
+            <button onclick="testAuth()">👤 Test Auth</button>
+            <button onclick="fetchProducts()">📦 Fetch Products</button>
+        </div>
+
+        <div id="log"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script>
+        const SUPABASE_URL = 'https://utkgqnqugutzoyyxsxtk.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_jgKuIK_GjA6xowWTyFSwWw_r2d_w2mg';
+
+        let supabase;
+
+        function log(msg) {
+            const logEl = document.getElementById('log');
+            logEl.innerHTML += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        async function init() {
+            try {
+                supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                log('Supabase client initialized');
+                await testConnection();
+            } catch (err) {
+                log('ERROR: ' + err.message);
+            }
+        }
+
+        async function testConnection() {
+            try {
+                const { data, error } = await supabase.from('products').select('count');
+                if (error) throw error;
+
+                document.getElementById('connection-status').className = 'status ok';
+                document.getElementById('connection-status').textContent = '✅ Connected to Supabase!';
+                log('Connection successful');
+            } catch (err) {
+                document.getElementById('connection-status').className = 'status error';
+                document.getElementById('connection-status').textContent = '❌ Connection failed: ' + err.message;
+                log('Connection failed: ' + err.message);
+            }
+        }
+
+        async function testAuth() {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error) throw error;
+
+                if (session) {
+                    document.getElementById('auth-status').className = 'status ok';
+                    document.getElementById('auth-status').textContent = '✅ Logged in as: ' + session.user.email;
+                    log('User logged in: ' + session.user.email);
+                } else {
+                    document.getElementById('auth-status').className = 'status pending';
+                    document.getElementById('auth-status').textContent = '⏳ No active session (not logged in)';
+                    log('No active session');
+                }
+            } catch (err) {
+                document.getElementById('auth-status').className = 'status error';
+                document.getElementById('auth-status').textContent = '❌ Auth error: ' + err.message;
+                log('Auth error: ' + err.message);
+            }
+        }
+
+        async function fetchProducts() {
+            try {
+                const { data, error } = await supabase.from('products').select('*');
+                if (error) throw error;
+
+                document.getElementById('db-status').className = 'status ok';
+                document.getElementById('db-status').textContent = `✅ Found ${data.length} products in database`;
+                log('Products fetched: ' + JSON.stringify(data.map(p => p.name)));
+            } catch (err) {
+                document.getElementById('db-status').className = 'status error';
+                document.getElementById('db-status').textContent = '❌ Database error: ' + err.message;
+                log('Database error: ' + err.message);
+            }
+        }
+
+        // Auto-init when script loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
